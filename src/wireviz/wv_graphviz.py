@@ -2,23 +2,15 @@
 
 import re
 import warnings
-from itertools import zip_longest
 from typing import Any, List, Optional, Tuple, Union
 
 from wireviz import APP_NAME, APP_URL, __version__
 from wireviz.wv_bom import partnumbers2list
 from wireviz.wv_colors import MultiColor
 from wireviz.wv_dataclasses import (
-    ArrowDirection,
-    ArrowWeight,
     Cable,
     Component,
     Connector,
-    MateComponent,
-    MatePin,
-    Options,
-    PartNumberInfo,
-    ShieldClass,
     WireClass,
 )
 from wireviz.wv_html import Img, Table, Td, Tr
@@ -57,8 +49,7 @@ def gv_node_component(component: Component) -> Table:
             bom_bubble(component.bom_id) if component.category != "bundle" else None,
             html_line_breaks(component.type),
             f"{component.wirecount}x" if component.show_wirecount else None,
-            component.gauge_str_with_equiv,
-            "+ S" if component.shield else None,
+            component.gauge_str,
             component.length_str,
             str(component.color) if component.color else None,
         ]
@@ -305,16 +296,10 @@ def gv_conductor_table(cable) -> Table:
     rows = []
     rows.append(Tr(Td("&nbsp;")))  # spacer row on top
 
-    inserted_break_inbetween = False
     for wire in cable.wire_objects.values():
-        # insert blank space between wires and shields
-        if isinstance(wire, ShieldClass) and not inserted_break_inbetween:
-            rows.append(Tr(Td("&nbsp;")))  # spacer row between wires and shields
-            inserted_break_inbetween = True
-
         # row above the wire
         wireinfo = []
-        if cable.show_wirenumbers and not isinstance(wire, ShieldClass):
+        if cable.show_wirenumbers:
             wireinfo.append(str(wire.id))
         wireinfo.append(str(wire.color))
         wireinfo.append(wire.label)
@@ -362,7 +347,7 @@ def gv_conductor_table(cable) -> Table:
     return tbl
 
 
-def gv_wire_cell(wire: Union[WireClass, ShieldClass], colspan: int) -> Td:
+def gv_wire_cell(wire: WireClass, colspan: int) -> Td:
     if wire.color:
         color_list = ["#000000"] + wire.color.html_padded_list + ["#000000"]
     else:
@@ -395,9 +380,8 @@ def gv_wire_cell(wire: Union[WireClass, ShieldClass], colspan: int) -> Td:
 
 def gv_edge_wire(harness, cable, connection) -> Tuple[str, str, str, str, str]:
     if connection.via.color:
-        # check if it's an actual wire and not a shield
         color = f"#000000:{connection.via.color.html_padded}:#000000"
-    else:  # it's a shield connection
+    else:  # uncolored wire
         color = "#000000"
 
     if connection.from_ is not None:  # connect to left
@@ -424,46 +408,6 @@ def gv_edge_wire(harness, cable, connection) -> Tuple[str, str, str, str, str]:
         code_right_1, code_right_2 = None, None
 
     return color, code_left_1, code_left_2, code_right_1, code_right_2
-
-
-def parse_arrow_str(inp: str) -> ArrowDirection:
-    if inp[0] == "<" and inp[-1] == ">":
-        return ArrowDirection.BOTH
-    elif inp[0] == "<":
-        return ArrowDirection.BACK
-    elif inp[-1] == ">":
-        return ArrowDirection.FORWARD
-    else:
-        return ArrowDirection.NONE
-
-
-def gv_edge_mate(mate) -> Tuple[str, str, str, str]:
-    if mate.arrow.weight == ArrowWeight.SINGLE:
-        color = "#000000"
-    elif mate.arrow.weight == ArrowWeight.DOUBLE:
-        color = "#000000:#000000"
-
-    dir = mate.arrow.direction.name.lower()
-
-    if isinstance(mate, MatePin):
-        from_pin_index = mate.from_.index
-        from_port_str = f":p{from_pin_index+1}r"
-        from_designator = mate.from_.parent
-        to_pin_index = mate.to.index
-        to_port_str = f":p{to_pin_index+1}l"
-        to_designator = mate.to.parent
-    elif isinstance(mate, MateComponent):
-        from_designator = mate.from_
-        from_port_str = ""
-        to_designator = mate.to
-        to_port_str = ""
-    else:
-        raise Exception(f"Unknown type of mate:\n{mate}")
-
-    code_from = f"{from_designator}{from_port_str}:e"
-    code_to = f"{to_designator}{to_port_str}:w"
-
-    return color, dir, code_from, code_to
 
 
 def colorbar_cells(color, mini=False) -> List[Td]:

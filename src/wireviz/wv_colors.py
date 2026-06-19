@@ -49,12 +49,6 @@ def convert_case(inp):
         return inp
 
 
-def get_color_by_colorcode_index(color_code: str, index: int) -> str:
-    num_colors_in_code = len(COLOR_CODES[color_code])
-    actual_index = index % num_colors_in_code  # wrap around if index is out of bounds
-    return COLOR_CODES[color_code][actual_index]
-
-
 @dataclass
 class SingleColor:
     _code_en: str
@@ -199,41 +193,3 @@ class MultiColor:
     @property
     def html_padded(self):
         return ":".join(self.html_padded_list)
-
-
-COLOR_CODES = {
-    # fmt: off
-    "DIN": [
-        "WH", "BN", "GN", "YE", "GY", "PK", "BU", "RD", "BK", "VT", "GYPK", "RDBU",
-        "WHGN", "BNGN", "WHYE", "YEBN", "WHGY", "GYBN", "WHPK", "PKBN", "WHBU", "BNBU",
-        "WHRD", "BNRD", "WHBK", "BNBK", "GYGN", "YEGY", "PKGN", "YEPK", "GNBU", "YEBU",
-        "GNRD", "YERD", "GNBK", "YEBK", "GYBU", "PKBU", "GYRD", "PKRD", "GYBK", "PKBK",
-        "BUBK", "RDBK", "WHBNBK", "YEGNBK", "GYPKBK", "RDBUBK", "WHGNBK", "BNGNBK",
-        "WHYEBK", "YEBNBK", "WHGYBK", "GYBNBK", "WHPKBK", "PKBNBK", "WHBUBK",
-        "BNBUBK", "WHRDBK", "BNRDBK",
-    ],
-    # fmt: on
-    "IEC": ["BN", "RD", "OG", "YE", "GN", "BU", "VT", "GY", "WH", "BK"],
-    "BW": ["BK", "WH"],
-    # 25-pair color code - see also https://en.wikipedia.org/wiki/25-pair_color_code
-    # 5 major colors (WH,RD,BK,YE,VT) combined with 5 minor colors (BU,OG,GN,BN,SL).
-    # Each POTS pair tip (+) had major/minor color, and ring (-) had minor/major color.
-    # fmt: off
-    "TEL": [  # 25x2: Ring and then tip of each pair
-        "BUWH", "WHBU", "OGWH", "WHOG", "GNWH", "WHGN", "BNWH", "WHBN", "SLWH", "WHSL",
-        "BURD", "RDBU", "OGRD", "RDOG", "GNRD", "RDGN", "BNRD", "RDBN", "SLRD", "RDSL",
-        "BUBK", "BKBU", "OGBK", "BKOG", "GNBK", "BKGN", "BNBK", "BKBN", "SLBK", "BKSL",
-        "BUYE", "YEBU", "OGYE", "YEOG", "GNYE", "YEGN", "BNYE", "YEBN", "SLYE", "YESL",
-        "BUVT", "VTBU", "OGVT", "VTOG", "GNVT", "VTGN", "BNVT", "VTBN", "SLVT", "VTSL",
-    ],
-    "TELALT": [  # 25x2: Tip and then ring of each pair
-        "WHBU", "BU",   "WHOG", "OG",   "WHGN", "GN",   "WHBN", "BN",   "WHSL", "SL",
-        "RDBU", "BURD", "RDOG", "OGRD", "RDGN", "GNRD", "RDBN", "BNRD", "RDSL", "SLRD",
-        "BKBU", "BUBK", "BKOG", "OGBK", "BKGN", "GNBK", "BKBN", "BNBK", "BKSL", "SLBK",
-        "YEBU", "BUYE", "YEOG", "OGYE", "YEGN", "GNYE", "YEBN", "BNYE", "YESL", "SLYE",
-        "VTBU", "BUVT", "VTOG", "OGVT", "VTGN", "GNVT", "VTBN", "BNVT", "VTSL", "SLVT",
-    ],
-    # fmt: on
-    "T568A": ["WHGN", "GN", "WHOG", "BU", "WHBU", "OG", "WHBN", "BN"],
-    "T568B": ["WHOG", "OG", "WHGN", "BU", "WHBU", "GN", "WHBN", "BN"],
-}
