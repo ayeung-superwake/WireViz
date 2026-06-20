@@ -401,6 +401,52 @@ class Harness:
             print("CSV output is not yet supported")
         # HTML output
         if "html" in fmt:
+            # derive model-based info blocks (e.g. twisted pairs) for the HTML template:
+            # each twisted group -> one row of "cable | wire-id:signal, ..." where the
+            # signal is the label of the pin the wire connects to.
+            twisted_rows = []
+            for cable in self.cables.values():
+                for group in getattr(cable, "twisted", []):
+                    cells = []
+                    for wire_id in group:
+                        labels = []
+                        for conn in cable._connections:
+                            if conn.via.id == wire_id:
+                                for pin in (conn.from_, conn.to):
+                                    if pin is not None and pin.label and pin.label not in labels:
+                                        labels.append(pin.label)
+                        signal = "/".join(labels)
+                        text = f"{wire_id}:{signal}" if signal else str(wire_id)
+                        # colour swatch — visual cue of the physical wire colour
+                        wire = cable.wire_objects.get(wire_id)
+                        cols = (
+                            [c.html for c in wire.color.colors if c.html]
+                            if (wire and wire.color)
+                            else []
+                        )
+                        if len(cols) <= 1:
+                            bg = f"background:{cols[0]}" if cols else "background:#ffffff"
+                        else:
+                            n = len(cols)
+                            bg = (
+                                "background:linear-gradient(90deg,"
+                                + ",".join(
+                                    f"{c} {i * 100 // n}% {(i + 1) * 100 // n}%"
+                                    for i, c in enumerate(cols)
+                                )
+                                + ")"
+                            )
+                        swatch = (
+                            '<span style="display:inline-block;width:2.4mm;height:2.4mm;'
+                            f"border:0.2mm solid #000;{bg};vertical-align:middle;"
+                            'margin-right:1mm"></span>'
+                        )
+                        cells.append(f"{swatch}{text}")
+                    twisted_rows.append([str(cable.designator), ", ".join(cells)])
+            if twisted_rows:
+                blocks = list(self.metadata.get("infoblocks", []))
+                blocks.append({"heading": "Twisted pairs", "rows": twisted_rows})
+                self.metadata["infoblocks"] = blocks
             generate_html_output(filename, bomlist, self.metadata, self.options)
         # PDF output
         if "pdf" in fmt:
