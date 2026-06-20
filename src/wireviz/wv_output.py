@@ -196,12 +196,28 @@ def generate_html_output(
         rev_current = html_line_breaks(str(list(metadata["revisions"].keys())[-1]))
     replacements["<!-- %rev_current% -->"] = rev_current
 
-    # render info blocks (authored or model-derived) as a stack of headed HTML tables.
-    # metadata["infoblocks"] is a list of {"heading": str, "rows": [[cell, ...], ...]}.
+    # render info blocks (authored or model-derived) as a stack of headed blocks.
+    # metadata["infoblocks"] is a list of {"heading": str, "rows": [[cell, ...], ...]};
+    # a block with "kind": "labels" draws each row as a to-shape physical-label box
+    # (cells -> stacked text lines) instead of a table row, so the label's outline and
+    # content layout are conveyed. Otherwise the rows render as an HTML table.
     blocks_html = []
     if metadata and metadata.get("infoblocks"):
         for block in metadata["infoblocks"]:
             heading = html_line_breaks(str(block.get("heading", "")))
+            if block.get("kind") == "labels":
+                boxes = []
+                for row in block.get("rows", []):
+                    lines = "".join(
+                        f'<div class="lbl-l">{html_line_breaks(str(cell))}</div>'
+                        for cell in row
+                    )
+                    boxes.append(f'<div class="lbl">{lines}</div>')
+                blocks_html.append(
+                    f'<div class="ib"><div class="ib-h">{heading}</div>'
+                    f'<div class="ib-labels">{"".join(boxes)}</div></div>'
+                )
+                continue
             body = []
             for row in block.get("rows", []):
                 cells = "".join(

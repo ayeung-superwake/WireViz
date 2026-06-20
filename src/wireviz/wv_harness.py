@@ -401,6 +401,48 @@ class Harness:
             print("CSV output is not yet supported")
         # HTML output
         if "html" in fmt:
+            # resolve model-derived info blocks authored as `source: connectors`: append
+            # one row per typed connector (splices/untyped skipped) after any authored
+            # rows, so the author keeps control of position and the block can't drift from
+            # the diagram. A label block (kind: labels) carries designator + role on the
+            # physical label; a table legend also gets the mating destination (subtype).
+            def _desig_key(conn):  # natural designator order: J2 before J10
+                d = str(conn.designator)
+                head = d.rstrip("0123456789")
+                tail = d[len(head):]
+                return (head, int(tail) if tail else 0)
+
+            def _harness_ident():  # full PN + latest revision, matching the output basename
+                pn = str(self.metadata.get("pn", "")).strip()
+                revs = self.metadata.get("revisions") or {}
+                keys = list(revs.keys())
+                if keys and all(str(k).isdigit() for k in keys):
+                    rev = max(keys, key=lambda k: int(k))  # highest, as authored (zero-padded)
+                elif keys:
+                    rev = keys[-1]                           # non-numeric tag -> last listed
+                else:
+                    rev = None
+                return f"{pn}-{rev}" if rev not in (None, "") else pn
+
+            for block in self.metadata.get("infoblocks", []):
+                if not isinstance(block, dict) or block.get("source") != "connectors":
+                    continue
+                as_labels = block.get("kind") == "labels"
+                derived = []
+                for c in sorted(self.connectors.values(), key=_desig_key):
+                    if not c.type or c.label is False:  # `label: false` opts a connector out
+                        continue
+                    row = [str(c.designator), str(c.type)]
+                    if not as_labels:
+                        row.append(str(c.subtype or ""))
+                    derived.append(row)
+                # a label block is auto-led by the harness ID nameplate (full PN+rev
+                # serial blank + company), so authors don't hand-type or drift it.
+                prefix = []
+                if as_labels:
+                    company = str(self.metadata.get("company", "")).strip()
+                    prefix = [[f"{_harness_ident()} #___", company]]
+                block["rows"] = prefix + list(block.get("rows", [])) + derived
             # derive model-based info blocks (e.g. twisted pairs) for the HTML template:
             # each twisted group -> one row of "cable | wire-id:signal, ..." where the
             # signal is the label of the pin the wire connects to.
