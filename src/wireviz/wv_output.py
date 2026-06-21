@@ -236,16 +236,17 @@ def generate_html_output(
     # harness doesn't set it (the watermark only shows when it is "True").
     replacements.setdefault("<!-- %draft% -->", "")
 
-    # Sheet-size label (standard designation only, no numeric dimensions) for the
-    # title block. Dims (sheet_w/h) are still computed below — the zone frame needs them.
+    # Sheet-size label for the title block (no numeric dimensions). US Letter/Tabloid
+    # show their exact ANSI equivalents (ANSI A / ANSI B); Legal has no ANSI class and
+    # keeps its name. Dims (sheet_w/h) are still computed below — the zone frame needs them.
     sheet_sizes = {
         "ansi-a": ("ANSI A", 279.4, 215.9), "ansi-b": ("ANSI B", 431.8, 279.4),
         "ansi-c": ("ANSI C", 558.8, 431.8), "ansi-d": ("ANSI D", 863.6, 558.8),
         "ansi-e": ("ANSI E", 1117.6, 863.6),
         "iso-a4": ("ISO A4", 297, 210), "iso-a3": ("ISO A3", 420, 297),
         "iso-a2": ("ISO A2", 594, 420), "iso-a1": ("ISO A1", 841, 594),
-        "iso-a0": ("ISO A0", 1189, 841), "letter": ("Letter", 279.4, 215.9),
-        "legal": ("Legal", 355.6, 215.9), "tabloid": ("Tabloid", 431.8, 279.4),
+        "iso-a0": ("ISO A0", 1189, 841), "letter": ("ANSI A", 279.4, 215.9),
+        "legal": ("Legal", 355.6, 215.9), "tabloid": ("ANSI B", 431.8, 279.4),
         "a4": ("ISO A4", 297, 210), "a3": ("ISO A3", 420, 297), "a2": ("ISO A2", 594, 420),
     }
     tokens = str(metadata.get("template", {}).get("sheetsize", "")).split() if metadata else []

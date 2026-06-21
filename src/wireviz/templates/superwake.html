@@ -195,16 +195,23 @@
     .revblock .c:nth-child(4n) { border-right: 0; }        /* last column -> frame edge */
     .idblock { display: grid; grid-template-columns: repeat(6, 1fr); }
     .idblock .c { border-right: 0; }                                                /* default right edge = frame */
-    .idblock .company, .idblock .size, .idblock .sheet { border-right: var(--din); } /* internal dividers */
+    .idblock .company, .idblock .pn, .idblock .size, .idblock .sheet { border-right: var(--din); } /* internal dividers */
     .idblock .title   { grid-column: 1 / -1; font-size: 3.2mm; font-weight: bold; white-space: normal; padding: 1mm; }
-    .idblock .company { grid-column: 1 / 4; padding: 0.8mm 1.5mm; }
+    .idblock .company { grid-column: 1 / 3; padding: 0.8mm 1.5mm; }                  /* logo | PN | REV row */
     .company-logo     { display: block; width: auto; height: auto; max-height: 3mm; max-width: 92%; }
-    .idblock .pn      { grid-column: 4 / 7; }
-    .idblock .company, .idblock .pn { font-size: 2.8mm; font-weight: bold; }
-    .idblock .size    { grid-column: 1 / 3; }                                        /* bottom row: SIZE | SHEET | REV */
-    .idblock .sheet   { grid-column: 3 / 5; }
+    .idblock .pn      { grid-column: 3 / 5; }
     .idblock .rev     { grid-column: 5 / 7; }
-    .idblock .size, .idblock .sheet, .idblock .rev { border-bottom: 0; }            /* bottom row -> frame edge */
+    .idblock .company, .idblock .pn, .idblock .rev { font-size: 2.8mm; font-weight: bold; }
+    .idblock .size    { grid-column: 1 / 3; }                                        /* SIZE | SHEET | BUILD row */
+    .idblock .sheet   { grid-column: 3 / 5; }
+    .idblock .build   { grid-column: 5 / 7; padding: 0.6mm 1mm; }   /* hashes at the SIZE/SHEET font */
+    .idblock .build .pw { color: #9a9a9a; }   /* separator recedes */
+    .idblock .build .ph { color: #555; }      /* commit hashes */
+    .idblock .size, .idblock .sheet, .idblock .build { border-bottom: 0; }   /* title-block edge; the footer's top rule closes it */
+    /* drawing footer — below the title block in the right pane: proprietary note
+       (wraps to fill the column) above the build-provenance stamp (hashes carry ink) */
+    #buildfooter { border-top: var(--din); padding: 0.8mm 1.5mm; font-size: 2.1mm; }
+    #buildfooter .fnote { display: block; color: #555; letter-spacing: 0.02em; }   /* proprietary note, wraps */
 
     /* ---- DRAFT watermark (shown only when metadata `draft` is set) ---- */
     #draft {
@@ -270,11 +277,13 @@
             <div class="c b ctr title"><!-- %title% --></div>
             <div class="c ctr company"><img class="company-logo" alt="SUPERWAKE" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iNDIwcHQiIGhlaWdodD0iNTZwdCIgdmlld0JveD0iMCAwIDQyMCA1NiI+CjxkZWZzPgo8Zz4KPGcgaWQ9ImdseXBoLTAtMCI+CjxwYXRoIGQ9Ik0gMjEuOTUzMTI1IDAuNzk2ODc1IEMgMzQuNjI1IDAuNzk2ODc1IDQxLjA0Njg3NSAtNi40ODQzNzUgNDEuMDQ2ODc1IC0xNS43NjU2MjUgQyA0MS4wNDY4NzUgLTI1LjA2MjUgMzUuNTYyNSAtMjkuMjM0Mzc1IDI0LjcwMzEyNSAtMzIuNjg3NSBDIDIwLjE1NjI1IC0zNC4wNjI1IDE2LjkyMTg3NSAtMzYgMTYuOTIxODc1IC0zOS4wMzEyNSBDIDE2LjkyMTg3NSAtNDEuOTA2MjUgMTkuNjU2MjUgLTQzLjQ4NDM3NSAyMy4yNSAtNDMuNDg0Mzc1IEMgMjYuOTIxODc1IC00My40ODQzNzUgMzAuNTkzNzUgLTQxLjY4NzUgMzMuNDA2MjUgLTM5LjE3MTg3NSBMIDM5LjQ1MzEyNSAtNDcuNDUzMTI1IEMgMzUuNzgxMjUgLTUxLjkwNjI1IDMwLjA5Mzc1IC01NC40Mzc1IDIyLjYwOTM3NSAtNTQuNDM3NSBDIDEyLjIzNDM3NSAtNTQuNDM3NSA1LjEwOTM3NSAtNDcuOTUzMTI1IDUuMTA5Mzc1IC0zOC43MzQzNzUgQyA1LjEwOTM3NSAtMzIuNTQ2ODc1IDYuNzAzMTI1IC0yNi4xNDA2MjUgMTkuMzc1IC0yMS45NTMxMjUgQyAyNS44NDM3NSAtMTkuODc1IDI4Ljg3NSAtMTguNzE4NzUgMjguODc1IC0xNS40ODQzNzUgQyAyOC44NzUgLTEyLjY3MTg3NSAyNi45MjE4NzUgLTEwLjIxODc1IDIxLjgxMjUgLTEwLjIxODc1IEMgMTYuNzgxMjUgLTEwLjIxODc1IDEyLjgxMjUgLTEzLjAzMTI1IDEwLjA3ODEyNSAtMTUuNzY1NjI1IEwgMy43NSAtNy42MjUgQyA2Ljc2NTYyNSAtMi41OTM3NSAxNC4xODc1IDAuNzk2ODc1IDIxLjk1MzEyNSAwLjc5Njg3NSBaIE0gMjEuOTUzMTI1IDAuNzk2ODc1ICIvPgo8L2c+CjxnIGlkPSJnbHlwaC0wLTEiPgo8cGF0aCBkPSJNIDI0LjA0Njg3NSAwLjcxODc1IEMgMzYuMTQwNjI1IDAuNzE4NzUgNDQuNjQwNjI1IC03LjI2NTYyNSA0NC42NDA2MjUgLTE5LjM3NSBMIDQ0LjY0MDYyNSAtNTMuNzgxMjUgTCAzMi45MDYyNSAtNTMuNzgxMjUgTCAzMi45MDYyNSAtMTkuMzc1IEMgMzIuOTA2MjUgLTEzLjg5MDYyNSAyOS41MTU2MjUgLTEwLjY1NjI1IDI0LjA0Njg3NSAtMTAuNjU2MjUgQyAxOC44NTkzNzUgLTEwLjY1NjI1IDE1Ljk4NDM3NSAtMTMuODI4MTI1IDE1LjkwNjI1IC0xOS4zNzUgTCAxNS45MDYyNSAtNTMuNzgxMjUgTCAzLjg5MDYyNSAtNTMuNzgxMjUgTCAzLjg5MDYyNSAtMTkuMzc1IEMgNC4wMzEyNSAtNy4yNjU2MjUgMTIuMTcxODc1IDAuNzE4NzUgMjQuMDQ2ODc1IDAuNzE4NzUgWiBNIDI0LjA0Njg3NSAwLjcxODc1ICIvPgo8L2c+CjxnIGlkPSJnbHlwaC0wLTIiPgo8cGF0aCBkPSJNIDIzLjU0Njg3NSAtNTMuNzgxMjUgTCA0LjYwOTM3NSAtNTMuNzgxMjUgTCA0LjYwOTM3NSAwIEwgMTUuOTg0Mzc1IDAgTCAxNS45ODQzNzUgLTE5Ljc5Njg3NSBMIDIzLjI1IC0xOS43OTY4NzUgQyAzNC45MjE4NzUgLTE5Ljc5Njg3NSA0MS40Njg3NSAtMjYuMjAzMTI1IDQxLjQ2ODc1IC0zNi43MTg3NSBDIDQxLjQ2ODc1IC00Ny4zNzUgMzQuOTg0Mzc1IC01My43ODEyNSAyMy41NDY4NzUgLTUzLjc4MTI1IFogTSAyMi4zMTI1IC0yOS44NzUgTCAxNS45ODQzNzUgLTI5Ljg3NSBMIDE1Ljk4NDM3NSAtNDMuNDg0Mzc1IEwgMjIuMzEyNSAtNDMuNDg0Mzc1IEMgMjcuMjgxMjUgLTQzLjQ4NDM3NSAyOS45NTMxMjUgLTQxLjEwOTM3NSAyOS45NTMxMjUgLTM2LjcxODc1IEMgMjkuOTUzMTI1IC0zMi4zMjgxMjUgMjcuMjgxMjUgLTI5Ljg3NSAyMi4zMTI1IC0yOS44NzUgWiBNIDIyLjMxMjUgLTI5Ljg3NSAiLz4KPC9nPgo8ZyBpZD0iZ2x5cGgtMC0zIj4KPHBhdGggZD0iTSAzNC44NDM3NSAtNDMuMzQzNzUgTCAzNC44NDM3NSAtNTMuNzgxMjUgTCA0LjYwOTM3NSAtNTMuNzgxMjUgTCA0LjYwOTM3NSAwIEwgMzQuODQzNzUgMCBMIDM0Ljg0Mzc1IC0xMC40Mzc1IEwgMTYuNjI1IC0xMC40Mzc1IEwgMTYuNjI1IC0yMS44MTI1IEwgMzQuNDg0Mzc1IC0yMS44MTI1IEwgMzQuNDg0Mzc1IC0zMS41MzEyNSBMIDE2LjYyNSAtMzEuNTMxMjUgTCAxNi42MjUgLTQzLjM0Mzc1IFogTSAzNC44NDM3NSAtNDMuMzQzNzUgIi8+CjwvZz4KPGcgaWQ9ImdseXBoLTAtNCI+CjxwYXRoIGQ9Ik0gMzIuMTg3NSAwIEwgNDUuODU5Mzc1IDAgTCAzMC44OTA2MjUgLTIyLjI1IEMgMzcuNDM3NSAtMjQuNjI1IDQwLjg5MDYyNSAtMzAuNTMxMjUgNDAuODkwNjI1IC0zOC4yOTY4NzUgQyA0MC44OTA2MjUgLTQ4LjQ1MzEyNSAzMy4xODc1IC01My43ODEyNSAyMy43NjU2MjUgLTUzLjc4MTI1IEwgNC42MDkzNzUgLTUzLjc4MTI1IEwgNC42MDkzNzUgMCBMIDE2LjQ4NDM3NSAwIEwgMTYuNDg0Mzc1IC0yMS4wOTM3NSBMIDE5LjIxODc1IC0yMS4wOTM3NSBaIE0gMTYuNDg0Mzc1IC00My45ODQzNzUgTCAyMS43NSAtNDMuOTg0Mzc1IEMgMjYuMTQwNjI1IC00My45ODQzNzUgMjkuNjU2MjUgLTQxLjk2ODc1IDI5LjY1NjI1IC0zNy4yMTg3NSBDIDI5LjY1NjI1IC0zMi4xMDkzNzUgMjYuMjgxMjUgLTMwLjE3MTg3NSAyMi4wMzEyNSAtMzAuMTcxODc1IEwgMTYuNDg0Mzc1IC0zMC4xNzE4NzUgWiBNIDE2LjQ4NDM3NSAtNDMuOTg0Mzc1ICIvPgo8L2c+CjxnIGlkPSJnbHlwaC0wLTUiPgo8cGF0aCBkPSJNIDYzLjE0MDYyNSAtNTMuNzgxMjUgTCA1My41IC0xNi41NjI1IEwgNDMuNjI1IC01My43ODEyNSBMIDMyLjA0Njg3NSAtNTMuNzgxMjUgTCAyMi40Njg3NSAtMTYuMTI1IEwgMTIuODkwNjI1IC01My43ODEyNSBMIC0wLjM1OTM3NSAtNTMuNzgxMjUgTCAxNS41NDY4NzUgMCBMIDI3LjU3ODEyNSAwIEwgMzcuMjE4NzUgLTM2LjY0MDYyNSBMIDQ3LjAxNTYyNSAwIEwgNTguOTY4NzUgMCBMIDc0Ljk1MzEyNSAtNTMuNzgxMjUgWiBNIDYzLjE0MDYyNSAtNTMuNzgxMjUgIi8+CjwvZz4KPGcgaWQ9ImdseXBoLTAtNiI+CjxwYXRoIGQ9Ik0gNDIuNDA2MjUgMCBMIDU1LjIxODc1IDAgTCAzMy43MDMxMjUgLTUzLjc4MTI1IEwgMjEuMzkwNjI1IC01My43ODEyNSBMIC0wLjA3ODEyNSAwIEwgMTIuODEyNSAwIEwgMTYuMjAzMTI1IC05IEwgMzguODc1IC05IFogTSAxOS45Mzc1IC0xOS4wNzgxMjUgTCAyNy4yODEyNSAtMzguNzM0Mzc1IEwgMzQuOTg0Mzc1IC0xOS4wNzgxMjUgWiBNIDE5LjkzNzUgLTE5LjA3ODEyNSAiLz4KPC9nPgo8ZyBpZD0iZ2x5cGgtMC03Ij4KPHBhdGggZD0iTSA0Ny4wOTM3NSAwIEwgMjcuNDM3NSAtMjkuMzc1IEwgNDUuOTM3NSAtNTMuNzgxMjUgTCAzMi40MDYyNSAtNTMuNzgxMjUgTCAxNi42MjUgLTMyLjMyODEyNSBMIDE2LjYyNSAtNTMuNzgxMjUgTCA0LjYwOTM3NSAtNTMuNzgxMjUgTCA0LjYwOTM3NSAwIEwgMTYuNjI1IDAgTCAxNi42MjUgLTI0LjQ4NDM3NSBMIDMzLjA0Njg3NSAwIFogTSA0Ny4wOTM3NSAwICIvPgo8L2c+CjwvZz4KPC9kZWZzPgo8ZyBmaWxsPSJyZ2IoMCUsIDAlLCAwJSkiIGZpbGwtb3BhY2l0eT0iMSI+Cjx1c2UgeGxpbms6aHJlZj0iI2dseXBoLTAtMCIgeD0iLTMuMDAzOTEiIHk9IjU0LjUzODY3Ii8+Cjx1c2UgeGxpbms6aHJlZj0iI2dseXBoLTAtMSIgeD0iNDAuNTU2MDkiIHk9IjU0LjUzODY3Ii8+Cjx1c2UgeGxpbms6aHJlZj0iI2dseXBoLTAtMiIgeD0iODkuMDg0MDkiIHk9IjU0LjUzODY3Ii8+Cjx1c2UgeGxpbms6aHJlZj0iI2dseXBoLTAtMyIgeD0iMTMxLjk5NjA5IiB5PSI1NC41Mzg2NyIvPgo8dXNlIHhsaW5rOmhyZWY9IiNnbHlwaC0wLTQiIHg9IjE2OS41ODAwOSIgeT0iNTQuNTM4NjciLz4KPC9nPgo8ZyBmaWxsPSJyZ2IoMCUsIDAlLCAwJSkiIGZpbGwtb3BhY2l0eT0iMSI+Cjx1c2UgeGxpbms6aHJlZj0iI2dseXBoLTAtNSIgeD0iMjEzLjg2MDI3IiB5PSI1NC41Mzg2NyIvPgo8L2c+CjxnIGZpbGw9InJnYigwJSwgMCUsIDAlKSIgZmlsbC1vcGFjaXR5PSIxIj4KPHVzZSB4bGluazpocmVmPSIjZ2x5cGgtMC02IiB4PSIyODEuNjg0MTI2IiB5PSI1NC41Mzg2NyIvPgo8dXNlIHhsaW5rOmhyZWY9IiNnbHlwaC0wLTciIHg9IjMzNi44MzYxMjYiIHk9IjU0LjUzODY3Ii8+Cjx1c2UgeGxpbms6aHJlZj0iI2dseXBoLTAtMyIgeD0iMzg0LjI4NDEyNiIgeT0iNTQuNTM4NjciLz4KPC9nPgo8L3N2Zz4K"></div>
             <div class="c b ctr pn"><!-- %pn% --></div>
-            <div class="c ctr size">SIZE&nbsp;<!-- %sheetsize_label% --></div>
-            <div class="c ctr sheet">SHEET&nbsp;<!-- %sheet_current% -->&nbsp;OF&nbsp;<!-- %sheet_total% --></div>
             <div class="c ctr rev">REV&nbsp;<!-- %rev_current% --></div>
+            <div class="c ctr size"><!-- %sheetsize_label% --></div>
+            <div class="c ctr sheet">SHEET&nbsp;<!-- %sheet_current% -->&nbsp;OF&nbsp;<!-- %sheet_total% --></div>
+            <div class="c ctr build"><!-- %build_provenance% --></div>
           </div>
         </div>
+        <div id="buildfooter"><span class="fnote">THIS DRAWING IS THE PROPERTY OF SUPERWAKE AND SHALL NOT BE REPRODUCED OR DISCLOSED WITHOUT WRITTEN CONSENT.</span></div>
 
       </div> <!-- /rightpane -->
 
