@@ -176,6 +176,115 @@ def generate_html_output(
                     elif isinstance(entry, (str, int, float)):
                         pass  # TODO?: replacements[f"<!-- %{item}_{category}% -->"] = html_line_breaks(str(entry))
 
+    # data-driven revision rows for the title block (newest first) so the table has
+    # exactly one row per revision — no empty hardcoded slots leaving broken cells.
+    rev_rows = []
+    if metadata and isinstance(metadata.get("revisions"), dict):
+        for key, entry in reversed(list(metadata["revisions"].items())):
+            e = entry if isinstance(entry, dict) else {}
+            rev_rows.append(
+                f'<div class="c">{html_line_breaks(str(key))}</div>'
+                f'<div class="c wrap">{html_line_breaks(str(e.get("changelog", "")))}</div>'
+                f'<div class="c">{html_line_breaks(str(e.get("date", "")))}</div>'
+                f'<div class="c">{html_line_breaks(str(e.get("name", "")))}</div>'
+            )
+    replacements["<!-- %revisions_rows% -->"] = "".join(rev_rows)
+
+    # latest revision key, for the title block's REV box (revisions authored newest-last)
+    rev_current = ""
+    if metadata and isinstance(metadata.get("revisions"), dict) and metadata["revisions"]:
+        rev_current = html_line_breaks(str(list(metadata["revisions"].keys())[-1]))
+    replacements["<!-- %rev_current% -->"] = rev_current
+
+    # render info blocks (authored or model-derived) as a stack of headed blocks.
+    # metadata["infoblocks"] is a list of {"heading": str, "rows": [[cell, ...], ...]};
+    # a block with "kind": "labels" draws each row as a to-shape physical-label box
+    # (cells -> stacked text lines) instead of a table row, so the label's outline and
+    # content layout are conveyed. Otherwise the rows render as an HTML table.
+    blocks_html = []
+    if metadata and metadata.get("infoblocks"):
+        for block in metadata["infoblocks"]:
+            heading = html_line_breaks(str(block.get("heading", "")))
+            if block.get("kind") == "labels":
+                boxes = []
+                for row in block.get("rows", []):
+                    lines = "".join(
+                        f'<div class="lbl-l">{html_line_breaks(str(cell))}</div>'
+                        for cell in row
+                    )
+                    boxes.append(f'<div class="lbl">{lines}</div>')
+                blocks_html.append(
+                    f'<div class="ib"><div class="ib-h">{heading}</div>'
+                    f'<div class="ib-labels">{"".join(boxes)}</div></div>'
+                )
+                continue
+            body = []
+            for row in block.get("rows", []):
+                cells = "".join(
+                    f"<td>{html_line_breaks(str(cell))}</td>" for cell in row
+                )
+                body.append(f"<tr>{cells}</tr>")
+            blocks_html.append(
+                f'<div class="ib"><div class="ib-h">{heading}</div>'
+                f'<table class="ib-t">{"".join(body)}</table></div>'
+            )
+    # always set, so the slot is truly empty (not a leftover comment) when there
+    # are no blocks — lets the template's :empty rule collapse the info pane.
+    replacements["<!-- %infoblocks% -->"] = "".join(blocks_html)
+
+    # DRAFT flag: default to empty so the data-draft attribute is clean when a
+    # harness doesn't set it (the watermark only shows when it is "True").
+    replacements.setdefault("<!-- %draft% -->", "")
+
+    # Sheet-size label for the title block (no numeric dimensions). US Letter/Tabloid
+    # show their exact ANSI equivalents (ANSI A / ANSI B); Legal has no ANSI class and
+    # keeps its name. Dims (sheet_w/h) are still computed below — the zone frame needs them.
+    sheet_sizes = {
+        "ansi-a": ("ANSI A", 279.4, 215.9), "ansi-b": ("ANSI B", 431.8, 279.4),
+        "ansi-c": ("ANSI C", 558.8, 431.8), "ansi-d": ("ANSI D", 863.6, 558.8),
+        "ansi-e": ("ANSI E", 1117.6, 863.6),
+        "iso-a4": ("ISO A4", 297, 210), "iso-a3": ("ISO A3", 420, 297),
+        "iso-a2": ("ISO A2", 594, 420), "iso-a1": ("ISO A1", 841, 594),
+        "iso-a0": ("ISO A0", 1189, 841), "letter": ("ANSI A", 279.4, 215.9),
+        "legal": ("Legal", 355.6, 215.9), "tabloid": ("ANSI B", 431.8, 279.4),
+        "a4": ("ISO A4", 297, 210), "a3": ("ISO A3", 420, 297), "a2": ("ISO A2", 594, 420),
+    }
+    tokens = str(metadata.get("template", {}).get("sheetsize", "")).split() if metadata else []
+    portrait = "portrait" in tokens
+    sheet_label, sheet_w, sheet_h = "", None, None
+    for tok in tokens:
+        if tok in sheet_sizes:
+            name, w, h = sheet_sizes[tok]
+            if portrait:
+                w, h = h, w
+            sheet_label = name
+            sheet_w, sheet_h = w, h
+            break
+    replacements["<!-- %sheetsize_label% -->"] = sheet_label
+
+    # Zone-reference frame (ASME Y14.1 style): numbers across top+bottom, letters down
+    # both sides, divisions sized to the sheet (~50 mm each). Built here (not JS) so it
+    # prints and shows in every viewer. Emitted as grid STRIPS placed in the frame's
+    # margin cells — even cells divide the span so numbers/letters land at the zone
+    # centres and cell borders draw the boundary ticks. No edge-pinned absolute
+    # positioning (which WebKit/QuickLook drop near the sheet edge).
+    zone_html = ""
+    if sheet_w:
+        margin = 6.0
+        cols = max(1, round((sheet_w - 2 * margin) / 50))
+        rows = max(1, min(26, round((sheet_h - 2 * margin) / 50)))
+        nums = "".join(f"<span>{i + 1}</span>" for i in range(cols))
+        lets = "".join(f"<span>{chr(65 + j)}</span>" for j in range(rows))
+        colcss = f"grid-template-columns:repeat({cols},1fr)"
+        rowcss = f"grid-template-rows:repeat({rows},1fr)"
+        zone_html = (
+            f'<div class="zrow top" style="{colcss}">{nums}</div>'
+            f'<div class="zrow bot" style="{colcss}">{nums}</div>'
+            f'<div class="zcol left" style="{rowcss}">{lets}</div>'
+            f'<div class="zcol right" style="{rowcss}">{lets}</div>'
+        )
+    replacements["<!-- %zoneframe% -->"] = zone_html
+
     # perform replacements
     # regex replacement adapted from:
     # https://gist.github.com/bgusach/a967e0587d6e01e889fd1d776c5f3729

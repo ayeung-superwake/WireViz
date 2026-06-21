@@ -18,7 +18,6 @@ from wireviz.wv_utils import (
     expand,
     file_read_text,
     get_single_key_and_value,
-    is_arrow,
     smart_file_resolve,
 )
 
@@ -195,9 +194,9 @@ def parse(
                 designators_and_templates[designator] = template
         return (template, designator)
 
-    # utilities to check for alternating connectors and cables/arrows ==========
+    # utilities to check for alternating connectors and cables ==========
 
-    alternating_types = ["connector", "cable/arrow"]
+    alternating_types = ["connector", "cable"]
     expected_type = None
 
     def check_type(designator, template, actual_type):
@@ -210,7 +209,7 @@ def parse(
                 f'Expected {expected_type}, but "{designator}" ("{template}") is {actual_type}'
             )
 
-    def alternate_type():  # flip between connector and cable/arrow
+    def alternate_type():  # flip between connector and cable
         nonlocal expected_type
         expected_type = alternating_types[1 - alternating_types.index(expected_type)]
 
@@ -229,13 +228,6 @@ def parse(
             # no item in the list revealed connection count;
             # assume connection count is 1
             connectioncount = [1]
-            # Example: The following is a valid connection set,
-            #          even though no item reveals the connection count;
-            #          the count is not needed because only a component-level mate happens.
-            # -
-            #   - CONNECTOR
-            #   - ==>
-            #   - CONNECTOR
 
         # check that all entries are the same length
         if len(set(connectioncount)) > 1:
@@ -299,23 +291,19 @@ def parse(
                     )
 
                 elif designator in harness.cables:  # existing cable instance
-                    check_type(designator, template, "cable/arrow")
+                    check_type(designator, template, "cable")
                 elif template in template_cables.keys():
                     # generate new cable instance from template
-                    check_type(designator, template, "cable/arrow")
+                    check_type(designator, template, "cable")
                     harness.add_cable(
                         designator=designator, **template_cables[template]
                     )
-
-                elif is_arrow(designator):
-                    check_type(designator, template, "cable/arrow")
-                    # arrows do not need to be generated here
                 else:
                     raise Exception(
-                        f"{template} is an unknown template/designator/arrow."
+                        f"{template} is an unknown template/designator."
                     )
 
-            # entries in connection set must alternate between connectors and cables/arrows
+            # entries in connection set must alternate between connectors and cables
             alternate_type()
 
         # transpose connection set list
@@ -347,29 +335,6 @@ def parse(
                     harness.connect(
                         from_name, from_pin, via_name, via_pin, to_name, to_pin
                     )
-
-                elif is_arrow(designator):
-                    if index_item == 0:  # list starts with an arrow
-                        raise Exception(
-                            "An arrow cannot be at the start of a connection set"
-                        )
-                    elif index_item == len(entry) - 1:  # list ends with an arrow
-                        raise Exception(
-                            "An arrow cannot be at the end of a connection set"
-                        )
-
-                    from_name, from_pin = get_single_key_and_value(
-                        entry[index_item - 1]
-                    )
-                    via_name, via_pin = (designator, None)
-                    to_name, to_pin = get_single_key_and_value(entry[index_item + 1])
-                    if "-" in designator:  # mate pin by pin
-                        harness.add_mate_pin(
-                            from_name, from_pin, to_name, to_pin, designator
-                        )
-                    elif "=" in designator and index_entry == 0:
-                        # mate two connectors as a whole
-                        harness.add_mate_component(from_name, to_name, designator)
 
     # warn about unused templates
 
